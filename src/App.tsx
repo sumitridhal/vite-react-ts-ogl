@@ -2,7 +2,7 @@ import "./App.css";
 
 import { useEffect, useRef } from "react";
 import { Scene } from "./canvas";
-import { Cube } from "./objects";
+import { TextureCube } from "./objects";
 
 // const imageSources = [
 //   "images/1.webp",
@@ -14,16 +14,25 @@ import { Cube } from "./objects";
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  let ignore = false;
   useEffect(() => {
-    if (!canvasRef.current) return;
-
+    if (!canvasRef.current || ignore) return;
     const scene = new Scene(canvasRef.current);
-    scene.start();
-    const cube = new Cube(scene.gl);
-    scene.add(cube.mesh);
-    scene.animate();
 
-    return () => scene.destroy();
+    (async () => {
+      scene.start();
+      // const cube = new Cube(scene.gl);
+      // scene.add(cube.mesh);
+      const mesh = new TextureCube(scene.gl);
+      await mesh.init("images/1.webp");
+      scene.add(mesh.mesh);
+      scene.animate();
+    })();
+
+    return () => {
+      ignore = true;
+      scene.destroy();
+    };
   }, []);
   return (
     <>

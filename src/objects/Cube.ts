@@ -6,10 +6,10 @@ export default class Cube {
 
   constructor(gl: OGLRenderingContext) {
     this.gl = gl;
-    this.mesh = this.createMesh();
+    this.mesh = this.create();
   }
 
-  private createMesh(): Mesh {
+  private create(): Mesh {
     const geometry = new Box(this.gl);
 
     const vertex = `
@@ -44,8 +44,3 @@ export default class Cube {
     return new Mesh(this.gl, { geometry, program });
   }
 }
-
-// Usage example:
-// const gl = ...; // Your OGL rendering context
-// const cube = new Cube(gl);
-// const mesh = cube.getMesh();

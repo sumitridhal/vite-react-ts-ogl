@@ -6,7 +6,7 @@ class Scene {
   public gl: OGLRenderingContext;
   private camera: Camera;
   private scene: Transform;
-  private mesh: Mesh | null;
+  private mesh!: Mesh;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -23,7 +23,6 @@ class Scene {
     this.camera.position.z = 5;
 
     this.scene = new Transform();
-    this.mesh = null;
     // this.mesh = this.createMesh();
     // this.mesh.setParent(this.scene);
 
@@ -44,9 +43,11 @@ class Scene {
     this.renderer.render({ scene: this.scene, camera: this.camera });
   }
 
-  public add(mesh: Mesh) {
-    this.mesh = mesh;
-    this.mesh.setParent(this.scene);
+  public add(mesh: Mesh | undefined) {
+    if (mesh) {
+      this.mesh = mesh;
+      this.mesh.setParent(this.scene);
+    }
   }
 
   public start() {

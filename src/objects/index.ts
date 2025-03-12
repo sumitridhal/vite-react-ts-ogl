@@ -1,3 +1,4 @@
 import Cube from "./Cube";
+import TextureCube from "./TextureCube";
 
-export { Cube };
+export { TextureCube, Cube };
