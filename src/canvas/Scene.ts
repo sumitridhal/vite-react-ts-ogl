@@ -7,6 +7,7 @@ class Scene {
   private camera: Camera;
   private scene: Transform;
   private mesh!: Mesh;
+  animation!: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -37,9 +38,14 @@ class Scene {
     });
   }
 
+  set(fn: () => void) {
+    this.animation = fn;
+  }
+
   public animate() {
     requestAnimationFrame(this.animate);
-    if (this.mesh) this.mesh.rotation.y += 0.01;
+    if (this.animation) this.animation();
+    // if (this.mesh) this.mesh.rotation.y += 0.01;
     this.renderer.render({ scene: this.scene, camera: this.camera });
   }
 

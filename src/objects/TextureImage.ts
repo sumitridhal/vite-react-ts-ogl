@@ -1,6 +1,6 @@
-import { OGLRenderingContext, Box, Program, Mesh, Texture } from "ogl"; // Assuming you're using OGL library
+import { OGLRenderingContext, Program, Mesh, Texture, Geometry } from "ogl";
 
-export default class TextureCube {
+export default class TextureImage {
   private gl: OGLRenderingContext;
   mesh!: Mesh;
   private texture: Texture;
@@ -11,9 +11,9 @@ export default class TextureCube {
   }
 
   // Asynchronously load the image and create the mesh
-  public async init(imageUrl: string): Promise<void> {
+  public async load(imageUrl: string, g: Geometry): Promise<void> {
     await this.loadTexture(imageUrl);
-    this.mesh = this.createMesh();
+    this.mesh = this.createMesh(g);
   }
 
   private async loadTexture(imageUrl: string): Promise<void> {
@@ -30,8 +30,8 @@ export default class TextureCube {
     });
   }
 
-  private createMesh(): Mesh {
-    const geometry = new Box(this.gl);
+  private createMesh(geometry: Geometry): Mesh {
+    // const geometry = new Plane(this.gl);
 
     const vertex = `
       attribute vec3 position;
@@ -66,8 +66,9 @@ export default class TextureCube {
       vertex,
       fragment,
       uniforms: {
-        tMap: { value: this.texture }, // Pass the texture as a uniform
+        tMap: { value: this.texture },
       },
+      transparent: true,
       cullFace: null,
     });
 

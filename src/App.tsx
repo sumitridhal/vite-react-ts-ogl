@@ -2,7 +2,8 @@ import "./App.css";
 
 import { useEffect, useRef } from "react";
 import { Scene } from "./canvas";
-import { TextureCube } from "./objects";
+import { TextureImage } from "./objects";
+import { Plane } from "ogl";
 
 // const imageSources = [
 //   "images/1.webp",
@@ -23,9 +24,13 @@ function App() {
       scene.start();
       // const cube = new Cube(scene.gl);
       // scene.add(cube.mesh);
-      const mesh = new TextureCube(scene.gl);
-      await mesh.init("images/1.webp");
-      scene.add(mesh.mesh);
+      const plane = new TextureImage(scene.gl);
+      await plane.load("images/1.webp", new Plane(scene.gl));
+      scene.add(plane.mesh);
+      // scene.set(() => {
+      //   plane.mesh.rotation.y += 0.01;
+      //   plane.mesh.rotation.z += 0.01;
+      // });
       scene.animate();
     })();
 
