@@ -1,16 +1,21 @@
 import "./App.css";
 
 import { useEffect, useRef } from "react";
-import { Scene } from "./canvas";
-import { TextureImage } from "./objects";
-import { Plane } from "ogl";
 
-// const imageSources = [
-//   "images/1.webp",
-//   "images/2.webp",
-//   "images/3.webp",
-//   "images/4.webp",
-// ];
+import { Scene } from "./canvas";
+import { Media } from "./objects";
+
+const images = [
+  "images/1.webp",
+  "images/2.webp",
+  "images/3.webp",
+  "images/4.webp",
+  "images/5.webp",
+  "images/6.webp",
+  "images/7.webp",
+  "images/8.webp",
+  "images/9.webp",
+];
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -21,22 +26,19 @@ function App() {
     const scene = new Scene(canvasRef.current);
 
     (async () => {
-      scene.start();
-      // const cube = new Cube(scene.gl);
-      // scene.add(cube.mesh);
-      const plane = new TextureImage(scene.gl);
-      await plane.load("images/1.webp", new Plane(scene.gl));
-      scene.add(plane.mesh);
-      // scene.set(() => {
-      //   plane.mesh.rotation.y += 0.01;
-      //   plane.mesh.rotation.z += 0.01;
-      // });
+      images.forEach(async (x, index) => {
+        const image = new Media(index, scene.gl, scene.viewport);
+        await image.load(x);
+        scene.add(image);
+        // scene.set(image.animate);
+      });
+
       scene.animate();
     })();
 
     return () => {
       ignore = true;
-      scene.destroy();
+      if (!ignore) scene.destroy();
     };
   }, []);
   return (

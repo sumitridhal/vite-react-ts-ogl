@@ -1,4 +1,6 @@
-import { Renderer, Camera, Transform, Mesh, OGLRenderingContext } from "ogl";
+import { Camera, OGLRenderingContext, Renderer, Transform } from "ogl";
+
+import type { Media } from "../objects";
 
 class Scene {
   private canvas: HTMLCanvasElement;
@@ -6,7 +8,13 @@ class Scene {
   public gl: OGLRenderingContext;
   private camera: Camera;
   private scene: Transform;
-  private mesh!: Mesh;
+  private meshs: Media[] = [];
+
+  viewport!: { height: number; width: number };
+  screen!: { height: number; width: number };
+  container!: { height: number; width: number };
+  bounds!: { height: number; width: number };
+
   animation!: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -21,18 +29,50 @@ class Scene {
     this.gl.clearColor(0.1, 0.1, 0.1, 1);
 
     this.camera = new Camera(this.gl);
+    this.camera.fov = 45;
     this.camera.position.z = 5;
 
     this.scene = new Transform();
-    // this.mesh = this.createMesh();
-    // this.mesh.setParent(this.scene);
 
     this.resize = this.resize.bind(this);
     this.animate = this.animate.bind(this);
+
+    this.resize();
+    this.listerners();
   }
 
-  private resize() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  private setSizes() {
+    this.screen = {
+      height: window.innerHeight,
+      width: window.innerWidth,
+    };
+
+    this.bounds = this.canvas.getBoundingClientRect();
+  }
+
+  private updateViewport() {
+    // Update the camera's aspect ratio
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix(); // Apply the updated aspect ratio
+
+    // Recalculate the viewport dimensions
+    const vFOV = this.camera.fov * (Math.PI / 180); // Vertical FOV in radians
+    const height = 2 * Math.tan(vFOV / 2) * this.camera.position.z;
+    const width = height * this.camera.aspect;
+
+    this.container = {
+      height: (height * this.bounds.height) / this.screen.height,
+      width: (width * this.bounds.width) / this.screen.width,
+    };
+    // Update viewport dimensions
+    this.viewport = { height, width };
+  }
+
+  public resize() {
+    this.setSizes();
+    this.updateViewport();
+    this.meshs.forEach((x) => x.update(this.viewport));
+    this.renderer.setSize(this.screen.width, this.screen.height);
     this.camera.perspective({
       aspect: this.gl.canvas.width / this.gl.canvas.height,
     });
@@ -43,23 +83,20 @@ class Scene {
   }
 
   public animate() {
-    requestAnimationFrame(this.animate);
+    window.requestAnimationFrame(this.animate);
     if (this.animation) this.animation();
-    // if (this.mesh) this.mesh.rotation.y += 0.01;
     this.renderer.render({ scene: this.scene, camera: this.camera });
   }
 
-  public add(mesh: Mesh | undefined) {
-    if (mesh) {
-      this.mesh = mesh;
-      this.mesh.setParent(this.scene);
+  public add(media: Media) {
+    if (media) {
+      this.meshs.push(media);
+      this.meshs.forEach((x) => x.plane.setParent(this.scene));
     }
   }
 
-  public start() {
-    window.addEventListener("resize", this.resize, false);
-    this.resize();
-    // this.animate();
+  public listerners() {
+    window.addEventListener("resize", this.resize);
   }
 
   public destroy() {
