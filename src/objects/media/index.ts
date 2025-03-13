@@ -180,20 +180,18 @@ export default class {
 
   public update() {
     const start = {
-      x: this.plane.scale.x,
       y: this.plane.scale.y,
+      x: this.plane.scale.x,
+      position: this.plane.position.y,
     };
 
     animate.to({
       duration: 1500,
-      ease: [0.75, 0.3, 0.2, 1],
+      ease: [0.1, 0.7, 0.2, 1],
       update: (t) => {
-        this.plane.scale.x = lerp(start.x, start.x * 2.5, t.ease);
-        this.program.uniforms.uPlaneSizes.value[0] = lerp(
-          start.x,
-          start.x * 2.5,
-          t.ease
-        );
+        this.plane.scale.y = lerp(start.y, 0, t.ease);
+        this.program.uniforms.uPlaneSizes.value[1] = lerp(start.y, 0, t.ease);
+        this.plane.position.y = lerp(start.position, start.y / 2, t.ease);
       },
     });
   }
