@@ -96,7 +96,7 @@ class Scene {
       this.scroll.target,
       this.scroll.ease
     );
-    // this.meshs.forEach((x) => x.animate(this.scroll));
+    this.meshs.forEach((x) => x.animate(this.scroll));
     this.scroll.last = performance.now();
 
     this.renderer.render({ scene: this.scene, camera: this.camera });

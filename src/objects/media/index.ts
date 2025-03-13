@@ -21,6 +21,9 @@ export default class {
   public plane!: Mesh;
   image!: HTMLImageElement;
   private viewport: Dims;
+  private columns = 3;
+  // private rows = 3;
+  private direction = -1;
 
   constructor(index: number, gl: OGLRenderingContext, viewport: Dims) {
     this.index = index;
@@ -53,7 +56,7 @@ export default class {
       this.plane = this.create(this.geometry);
       this.plane.scale.x *= 2;
       this.plane.scale.y *= 2;
-      console.log(this.viewport);
+
       this.update(this.viewport);
     } catch (error) {
       console.error("Error loading texture:", error);
@@ -114,15 +117,13 @@ export default class {
 
   private position() {
     if (!this.plane) return;
-    // Divide the visible area into 2 rows and 3 columns
-    const columns = 3; // Number of columns
 
     // Calculate the width and height of each section
-    const sectionWidth = this.viewport.width / columns;
+    const sectionWidth = this.viewport.width / this.columns;
 
     // Determine the row and column based on this.index
-    const row = Math.floor(this.index / columns);
-    const col = this.index % columns;
+    const row = Math.floor(this.index / this.columns);
+    const col = this.index % this.columns;
 
     // Calculate the center of the specified section
     const centerX =
@@ -141,11 +142,11 @@ export default class {
       centerY = -this.viewport.height / 2;
     }
 
+    // Alternate middle columns
     if (col === 1) {
       centerY += 1.2;
     }
 
-    console.log(`${this.index}: { x: ${centerX} , y: ${centerY} }`);
     // Adjust the plane's position to the center of the specified section
     this.plane.position.set(centerX, centerY, 0);
     // this.plane.position.y = this.viewport.height / 2;
@@ -153,15 +154,21 @@ export default class {
 
   public animate(scroll: Scroll) {
     if (!this.plane) return;
+    // reset to top
+    if (
+      this.plane.position.y <=
+      this.viewport.height * (0.5 * this.direction) - this.plane.scale.y / 2
+    ) {
+      this.plane.position.y =
+        this.viewport.height * (0.5 * -this.direction) +
+        this.plane.scale.y / 2 +
+        0.05;
+    }
 
-    // Define the speed of the slow scroll effect
+    this.plane.position.y += scroll.ease * this.direction;
 
-    // Incrementally update the y position for a slow scroll effect
-    this.plane.position.y -= scroll.ease * 1; // Use `-=` for scrolling down, `+=` for scrolling up
-
-    // Optionally, you can add a subtle wave effect for visual interest
-    const time = scroll.last * 0.001; // Convert to seconds
-    this.plane.program.uniforms.uStrength.value = Math.sin(time) * 0.5;
+    this.plane.program.uniforms.uStrength.value =
+      Math.sin(scroll.last * 0.001) * 0.25;
   }
 
   public update(viewport: Dims) {
