@@ -24,6 +24,7 @@ export default class {
   private columns = 3;
   // private rows = 3;
   private direction = -1;
+  private mode: "contain" | "cover" | "fit" = "contain";
 
   constructor(index: number, gl: OGLRenderingContext, viewport: Dims) {
     this.index = index;
@@ -35,8 +36,8 @@ export default class {
       fragment,
       uniforms: {
         tMap: { value: this.texture },
-        uPlaneSizes: { value: [0, 0] },
-        uImageSizes: { value: [0, 0] },
+        uPlaneSizes: { value: [100, 100] },
+        uImageSizes: { value: [100, 100] },
         uViewportSizes: { value: [100, 66.67] },
         uStrength: { value: 0 },
       },
@@ -45,7 +46,11 @@ export default class {
     });
 
     this.animate = this.animate.bind(this);
+    this.start = this.start.bind(this);
+    this.click = this.click.bind(this);
     this.update = this.update.bind(this);
+
+    this.listerners();
   }
 
   // Asynchronously load the image and create the mesh
@@ -57,7 +62,7 @@ export default class {
       this.plane.scale.x *= 2;
       this.plane.scale.y *= 2;
 
-      this.update(this.viewport);
+      this.start(this.viewport);
     } catch (error) {
       console.error("Error loading texture:", error);
       throw error;
@@ -143,9 +148,9 @@ export default class {
     }
 
     // Alternate middle columns
-    if (col === 1) {
-      centerY += 1.2;
-    }
+    // if (col === 1) {
+    //   centerY += 1.2;
+    // }
 
     // Adjust the plane's position to the center of the specified section
     this.plane.position.set(centerX, centerY, 0);
@@ -171,9 +176,52 @@ export default class {
       Math.sin(scroll.last * 0.001) * 0.25;
   }
 
-  public update(viewport: Dims) {
+  public update() {
+    const duration = 500;
+    const startX = this.plane.scale.x;
+    const targetX = startX * 1.6;
+    const startY = this.plane.scale.y;
+    const targetY = startY * 0.6;
+
+    let startTime: number;
+
+    const easeOutQuad = (t: number) => t * (2 - t);
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+
+      const progress = Math.min(elapsed / duration, 1); // Clamp progress between 0 and 1
+
+      this.plane.scale.x = startX + (targetX - startX) * easeOutQuad(progress);
+      this.plane.scale.y = startY + (targetY - startY) * easeOutQuad(progress);
+
+      this.program.uniforms.uPlaneSizes.value = [
+        startX + (targetX - startX) * easeOutQuad(progress),
+        startY + (targetY - startY) * easeOutQuad(progress),
+      ];
+
+      if (progress < 1) {
+        requestAnimationFrame(animate); // Continue animation until complete
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }
+
+  public start(viewport: Dims) {
     if (viewport) this.viewport = viewport;
     this.transform();
     this.position();
+  }
+
+  private click(_event: MouseEvent) {
+    this.mode = this.mode === "contain" ? "cover" : "contain";
+
+    this.update();
+  }
+
+  public listerners() {
+    window.addEventListener("click", this.click);
   }
 }

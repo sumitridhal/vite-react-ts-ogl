@@ -81,7 +81,7 @@ class Scene {
   public resize() {
     this.setSizes();
     this.updateViewport();
-    this.meshs.forEach((x) => x.update(this.viewport));
+    this.meshs.forEach((x) => x.start(this.viewport));
     this.renderer.setSize(this.screen.width, this.screen.height);
     this.camera.perspective({
       aspect: this.gl.canvas.width / this.gl.canvas.height,
@@ -96,7 +96,7 @@ class Scene {
       this.scroll.target,
       this.scroll.ease
     );
-    this.meshs.forEach((x) => x.animate(this.scroll));
+    // this.meshs.forEach((x) => x.animate(this.scroll));
     this.scroll.last = performance.now();
 
     this.renderer.render({ scene: this.scene, camera: this.camera });
