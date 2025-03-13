@@ -6,49 +6,11 @@ import {
   Program,
   Texture,
 } from "ogl";
-
-// Shader sources (could also be imported from separate files)
-const vertexShaderSource = `
-    attribute vec3 position;
-    attribute vec3 normal;
-    attribute vec2 uv;
-    uniform mat4 modelViewMatrix;
-    uniform mat4 projectionMatrix;
-    uniform mat3 normalMatrix;
-    varying vec3 vNormal;
-    varying vec2 vUv;
-    void main() {
-        vNormal = normalize(normalMatrix * normal);
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-`;
-
-const fragmentShaderSource = `
-    precision highp float;
-
-    uniform vec2 uImageSizes;
-    uniform vec2 uPlaneSizes;
-    uniform sampler2D tMap;
-
-    varying vec2 vUv;
-    void main() {
-        vec2 ratio = vec2(
-            min((uPlaneSizes.x / uPlaneSizes.y) / (uImageSizes.x / uImageSizes.y), 1.0),
-            min((uPlaneSizes.y / uPlaneSizes.x) / (uImageSizes.y / uImageSizes.x), 1.0)
-        );
-
-        vec2 uv = vec2(
-            vUv.x * ratio.x + (1.0 - ratio.x) * 0.5,
-            vUv.y * ratio.y + (1.0 - ratio.y) * 0.5
-        );
-
-        gl_FragColor.rgb = texture2D(tMap, uv).rgb;
-        gl_FragColor.a = 1.0;
-    }
-`;
+import vertex from "./vertex.glsl";
+import fragment from "./fragment.glsl";
 
 type Dims = { height: number; width: number };
+type Scroll = { ease: number; current: number; target: number; last: number };
 
 export default class {
   private index: number = 0;
@@ -66,8 +28,8 @@ export default class {
     this.gl = gl;
     this.texture = new Texture(this.gl);
     this.program = new Program(this.gl, {
-      vertex: vertexShaderSource,
-      fragment: fragmentShaderSource,
+      vertex,
+      fragment,
       uniforms: {
         tMap: { value: this.texture },
         uPlaneSizes: { value: [0, 0] },
@@ -89,6 +51,9 @@ export default class {
       this.geometry = new Plane(this.gl, { heightSegments: 10 });
       await this.apply(src);
       this.plane = this.create(this.geometry);
+      this.plane.scale.x *= 2;
+      this.plane.scale.y *= 2;
+      console.log(this.viewport);
       this.update(this.viewport);
     } catch (error) {
       console.error("Error loading texture:", error);
@@ -149,27 +114,54 @@ export default class {
 
   private position() {
     if (!this.plane) return;
+    // Divide the visible area into 2 rows and 3 columns
+    const columns = 3; // Number of columns
 
-    // Divide the visible area into 3 rows and 3 columns
-    const sectionWidth = this.viewport.width / 3;
-    const sectionHeight = this.viewport.height / 3;
+    // Calculate the width and height of each section
+    const sectionWidth = this.viewport.width / columns;
 
     // Determine the row and column based on this.index
-    const row = Math.floor(this.index / 3);
-    const col = this.index % 3;
+    const row = Math.floor(this.index / columns);
+    const col = this.index % columns;
 
     // Calculate the center of the specified section
     const centerX =
       -this.viewport.width / 2 + col * sectionWidth + sectionWidth / 2;
-    const centerY =
-      this.viewport.height / 2 - row * sectionHeight - sectionHeight / 2;
 
+    let centerY = 0;
+
+    if (row === 0) {
+      // First row (indices 0, 3, 6): Half above the screen
+      centerY = this.viewport.height / 2;
+    } else if (row === 1) {
+      // Second row (indices 1, 4, 7): Center of the screen
+      centerY = 0;
+    } else if (row === 2) {
+      // Third row (indices 2, 5, 8): Half below the screen
+      centerY = -this.viewport.height / 2;
+    }
+
+    if (col === 1) {
+      centerY += 1.2;
+    }
+
+    console.log(`${this.index}: { x: ${centerX} , y: ${centerY} }`);
     // Adjust the plane's position to the center of the specified section
     this.plane.position.set(centerX, centerY, 0);
+    // this.plane.position.y = this.viewport.height / 2;
   }
 
-  public animate() {
-    // this.plane.position.y += 0.01;
+  public animate(scroll: Scroll) {
+    if (!this.plane) return;
+
+    // Define the speed of the slow scroll effect
+
+    // Incrementally update the y position for a slow scroll effect
+    this.plane.position.y -= scroll.ease * 1; // Use `-=` for scrolling down, `+=` for scrolling up
+
+    // Optionally, you can add a subtle wave effect for visual interest
+    const time = scroll.last * 0.001; // Convert to seconds
+    this.plane.program.uniforms.uStrength.value = Math.sin(time) * 0.5;
   }
 
   public update(viewport: Dims) {

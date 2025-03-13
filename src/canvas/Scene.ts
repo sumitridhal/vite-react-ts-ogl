@@ -1,7 +1,9 @@
 import { Camera, OGLRenderingContext, Renderer, Transform } from "ogl";
 
 import type { Media } from "../objects";
+import { lerp } from "../utils/math";
 
+type Scroll = { ease: number; current: number; target: number; last: number };
 class Scene {
   private canvas: HTMLCanvasElement;
   private renderer: Renderer;
@@ -10,12 +12,12 @@ class Scene {
   private scene: Transform;
   private meshs: Media[] = [];
 
+  speed: number = 0;
   viewport!: { height: number; width: number };
   screen!: { height: number; width: number };
   container!: { height: number; width: number };
-  bounds!: { height: number; width: number };
-
-  animation!: () => void;
+  bounds!: DOMRect;
+  scroll!: Scroll;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -42,9 +44,17 @@ class Scene {
   }
 
   private setSizes() {
+    this.speed = 2;
     this.screen = {
       height: window.innerHeight,
       width: window.innerWidth,
+    };
+
+    this.scroll = {
+      ease: 0.01,
+      current: 0,
+      target: 0,
+      last: 0,
     };
 
     this.bounds = this.canvas.getBoundingClientRect();
@@ -78,14 +88,19 @@ class Scene {
     });
   }
 
-  set(fn: () => void) {
-    this.animation = fn;
-  }
-
   public animate() {
-    window.requestAnimationFrame(this.animate);
-    if (this.animation) this.animation();
+    this.scroll.target += this.speed;
+
+    this.scroll.current = lerp(
+      this.scroll.current,
+      this.scroll.target,
+      this.scroll.ease
+    );
+    // this.meshs.forEach((x) => x.animate(this.scroll));
+    this.scroll.last = performance.now();
+
     this.renderer.render({ scene: this.scene, camera: this.camera });
+    window.requestAnimationFrame(this.animate);
   }
 
   public add(media: Media) {

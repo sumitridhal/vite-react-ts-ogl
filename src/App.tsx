@@ -30,7 +30,6 @@ function App() {
         const image = new Media(index, scene.gl, scene.viewport);
         await image.load(x);
         scene.add(image);
-        // scene.set(image.animate);
       });
 
       scene.animate();

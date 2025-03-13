@@ -1,4 +1,4 @@
 import Cube from "./Cube";
-import Media from "./Media";
+import Media from "./media";
 
 export { Media, Cube };
