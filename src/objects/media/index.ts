@@ -9,7 +9,7 @@ import {
 import vertex from "./vertex.glsl";
 import fragment from "./fragment.glsl";
 import { lerp } from "../../utils/math";
-import { to } from "../../utils";
+import { animate } from "../../utils";
 
 type Dims = { height: number; width: number };
 type Scroll = { ease: number; current: number; target: number; last: number };
@@ -184,19 +184,18 @@ export default class {
       y: this.plane.scale.y,
     };
 
-    new to({
-      duration: 500,
-      ease: "out",
+    animate.to({
+      duration: 1500,
+      ease: [0.75, 0.3, 0.2, 1],
       update: (t) => {
         this.plane.scale.x = lerp(start.x, start.x * 2.5, t.ease);
-
         this.program.uniforms.uPlaneSizes.value[0] = lerp(
           start.x,
-          start.x * 3,
+          start.x * 2.5,
           t.ease
         );
       },
-    }).start();
+    });
   }
 
   public start(viewport: Dims) {

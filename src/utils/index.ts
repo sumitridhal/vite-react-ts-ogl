@@ -1,3 +1,3 @@
-export * from "./gasp";
+export * from "./animate";
 export * from "./math";
-export * from "./trasitions";
+export * from "./ease";
