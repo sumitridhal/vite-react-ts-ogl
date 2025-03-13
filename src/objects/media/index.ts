@@ -8,6 +8,8 @@ import {
 } from "ogl";
 import vertex from "./vertex.glsl";
 import fragment from "./fragment.glsl";
+import { lerp } from "../../utils/math";
+import { to } from "../../utils";
 
 type Dims = { height: number; width: number };
 type Scroll = { ease: number; current: number; target: number; last: number };
@@ -177,36 +179,24 @@ export default class {
   }
 
   public update() {
-    const duration = 500;
-    const startX = this.plane.scale.x;
-    const targetX = startX * 1.6;
-    const startY = this.plane.scale.y;
-    const targetY = startY * 0.6;
-
-    let startTime: number;
-
-    const easeOutQuad = (t: number) => t * (2 - t);
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-
-      const progress = Math.min(elapsed / duration, 1); // Clamp progress between 0 and 1
-
-      this.plane.scale.x = startX + (targetX - startX) * easeOutQuad(progress);
-      this.plane.scale.y = startY + (targetY - startY) * easeOutQuad(progress);
-
-      this.program.uniforms.uPlaneSizes.value = [
-        startX + (targetX - startX) * easeOutQuad(progress),
-        startY + (targetY - startY) * easeOutQuad(progress),
-      ];
-
-      if (progress < 1) {
-        requestAnimationFrame(animate); // Continue animation until complete
-      }
+    const start = {
+      x: this.plane.scale.x,
+      y: this.plane.scale.y,
     };
 
-    requestAnimationFrame(animate);
+    new to({
+      duration: 500,
+      ease: "out",
+      update: (t) => {
+        this.plane.scale.x = lerp(start.x, start.x * 2.5, t.ease);
+
+        this.program.uniforms.uPlaneSizes.value[0] = lerp(
+          start.x,
+          start.x * 3,
+          t.ease
+        );
+      },
+    }).start();
   }
 
   public start(viewport: Dims) {
