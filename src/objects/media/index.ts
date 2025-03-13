@@ -182,16 +182,16 @@ export default class {
     const start = {
       y: this.plane.scale.y,
       x: this.plane.scale.x,
-      position: this.plane.position.y,
+      position: this.plane.position.x,
     };
 
     animate.to({
       duration: 1500,
       ease: [0.1, 0.7, 0.2, 1],
       update: (t) => {
-        this.plane.scale.y = lerp(start.y, 0, t.ease);
-        this.program.uniforms.uPlaneSizes.value[1] = lerp(start.y, 0, t.ease);
-        this.plane.position.y = lerp(start.position, start.y / 2, t.ease);
+        this.plane.scale.x = lerp(start.x, 0, t.ease);
+        this.program.uniforms.uPlaneSizes.value[0] = lerp(start.x, 0, t.ease);
+        this.plane.position.x = lerp(start.position, start.x / 2, t.ease);
       },
     });
   }
