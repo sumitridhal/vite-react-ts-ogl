@@ -9,8 +9,9 @@ import {
 import vertex from "./vertex.glsl";
 import fragment from "./fragment.glsl";
 import { lerp } from "../../utils/math";
-import { animate } from "../../utils";
+import { animate, AnimationParams } from "../../utils";
 
+type Time = { time: number; progress: number; ease: number };
 type Dims = { height: number; width: number };
 type Scroll = { ease: number; current: number; target: number; last: number };
 
@@ -26,7 +27,7 @@ export default class {
   private columns = 3;
   // private rows = 3;
   private direction = -1;
-  private mode: "contain" | "cover" | "fit" = "contain";
+  private mode: "contain" | "flip" | "fit" | "close" = "contain";
 
   constructor(index: number, gl: OGLRenderingContext, viewport: Dims) {
     this.index = index;
@@ -50,10 +51,10 @@ export default class {
 
     this.animate = this.animate.bind(this);
     this.start = this.start.bind(this);
-    this.click = this.click.bind(this);
+    this.transform = this.transform.bind(this);
     this.update = this.update.bind(this);
 
-    this.listerners();
+    // this.listerners();
   }
 
   // Asynchronously load the image and create the mesh
@@ -99,7 +100,6 @@ export default class {
     if (this.plane) {
       const [w, h] = this.program.uniforms.uImageSizes.value;
       const r = w / h;
-
       // Get the current dimensions of the plane
       const planeWidth = this.plane.scale.x;
       const planeHeight = this.plane.scale.y;
@@ -151,9 +151,9 @@ export default class {
     }
 
     // Alternate middle columns
-    // if (col === 1) {
-    //   centerY += 1.2;
-    // }
+    if (col === 1) {
+      centerY += 1.2;
+    }
 
     // Adjust the plane's position to the center of the specified section
     this.plane.position.set(centerX, centerY, 0);
@@ -179,23 +179,7 @@ export default class {
       Math.sin(scroll.last * 0.001) * 0.25;
   }
 
-  public update() {
-    const start = {
-      y: this.plane.scale.y,
-      x: this.plane.scale.x,
-      position: this.plane.position.y,
-    };
-
-    animate.to({
-      duration: 1500,
-      ease: [0.1, 0.7, 0.2, 1],
-      update: (t) => {
-        this.plane.scale.y = lerp(start.y, 0, t.ease);
-        this.program.uniforms.uPlaneSizes.value[1] = lerp(start.y, 0, t.ease);
-        // this.plane.position.y = lerp(start.position, start.y / 2, t.ease);
-      },
-    });
-  }
+  public update() {}
 
   public start(viewport: Dims) {
     if (viewport) this.viewport = viewport;
@@ -203,13 +187,81 @@ export default class {
     this.position();
   }
 
-  private click(_event: MouseEvent) {
-    this.mode = this.mode === "contain" ? "cover" : "contain";
+  public trasform(mode: string) {
+    this.mode = mode as typeof this.mode;
+    const start = {
+      y: this.plane.scale.y,
+      x: this.plane.scale.x,
+      position: this.plane.position.y,
+    };
 
-    this.update();
+    const map: Record<string, AnimationParams> = {
+      up: {
+        duration: 3000,
+        ease: [0.1, 0.7, 0.2, 1],
+        update: (t) => {
+          this.plane.position.y = lerp(
+            this.plane.position.y,
+            this.plane.position.y + 0.02,
+            t.ease
+          );
+        },
+      },
+      down: {
+        duration: 3000,
+        ease: [0.1, 0.7, 0.2, 1],
+        update: (t) => {
+          this.plane.position.y = lerp(
+            this.plane.position.y,
+            this.plane.position.y - 0.02,
+            t.ease
+          );
+        },
+      },
+      open: {
+        duration: 1500,
+        ease: [1, 0.2, 0.7, 0.1],
+        update: (t: Time) => {
+          const y = 2 / 0.65;
+          this.plane.scale.y = lerp(0, y, t.ease);
+          this.program.uniforms.uPlaneSizes.value[1] = lerp(0, y, t.ease);
+          // this.plane.position.y = lerp(start.position, start.y / 2, t.ease);
+        },
+      },
+      close: {
+        duration: 1500,
+        ease: [0.1, 0.7, 0.2, 1],
+        update: (t: Time) => {
+          this.plane.scale.y = lerp(start.y, 0, t.ease);
+          this.program.uniforms.uPlaneSizes.value[1] = lerp(start.y, 0, t.ease);
+          // this.plane.position.y = lerp(start.position, start.y / 2, t.ease);
+        },
+      },
+      fit: {
+        duration: 1500,
+        ease: [0.75, 0.3, 0.2, 1],
+        update: (t: Time) => {
+          this.plane.scale.x = lerp(start.x, start.x * 2, t.ease);
+        },
+      },
+      contain: {
+        duration: 1500,
+        ease: [0.75, 0.3, 0.2, 1],
+        update: (t: Time) => {
+          this.plane.scale.x = lerp(start.x, start.x * 2, t.ease);
+          this.program.uniforms.uPlaneSizes.value = [
+            this.plane.scale.x,
+            this.plane.scale.y,
+          ];
+        },
+      },
+    };
+    animate.to({
+      ...map[this.mode],
+    });
   }
 
-  public listerners() {
-    window.addEventListener("click", this.click);
-  }
+  // public listerners() {
+  //   window.addEventListener("click", this.close);
+  // }
 }

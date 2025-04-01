@@ -1,6 +1,6 @@
 import { ease } from "./ease";
 
-interface AnimationParams {
+export interface AnimationParams {
   duration: number;
   ease: [number, number, number, number] | string;
   update: (t: { time: number; progress: number; ease: number }) => void;
